@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from config import FUNDING_THRESHOLD, FUNDING_DELTA_MIN, PRICE_CHANGE_MIN, SHORT_LIQ_MIN
+from config import FUNDING_THRESHOLD, PRICE_CHANGE_MIN, SHORT_LIQ_MIN
 
 log = logging.getLogger(__name__)
 
@@ -51,12 +51,9 @@ def evaluate(current: list[dict], previous: list[dict]) -> list[Signal]:
         if funding_now > FUNDING_THRESHOLD:
             continue
 
-        # Filter 2: funding must have dropped significantly (delta)
         funding_delta = funding_now - funding_prev
-        if funding_delta > FUNDING_DELTA_MIN:
-            continue
 
-        # Filter 3: price must be rising
+        # Filter 2: price must be rising
         price_change = (price_now - price_prev) / price_prev * 100
         if price_change < PRICE_CHANGE_MIN:
             continue
