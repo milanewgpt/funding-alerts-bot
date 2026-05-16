@@ -1,3 +1,4 @@
+import time
 import httpx
 import logging
 from signal_engine import Signal
@@ -6,7 +7,6 @@ from config import TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 log = logging.getLogger(__name__)
 
 TG_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-
 CHART_URL = "https://www.tradingview.com/chart/?symbol=BINANCE:{symbol}USDT.P"
 
 
@@ -18,18 +18,35 @@ def _fmt_liq(usd: float) -> str:
     return f"${usd:.0f}"
 
 
+def _fmt_funding_count(next_funding_time_ms: int) -> str:
+    if not next_funding_time_ms:
+        return "—"
+    minutes_left = max(0, (next_funding_time_ms / 1000 - time.time()) / 60)
+    # guess interval from minutes_left
+    if minutes_left <= 65:
+        interval = "1h"
+    elif minutes_left <= 260:
+        interval = "4h"
+    else:
+        interval = "8h"
+    return f"{int(minutes_left)}m ({interval})"
+
+
 def format_message(sig: Signal) -> str:
     emoji = "🔥 Strong signal" if sig.strong else "🟢 Long setup"
     liq_line = f"\n🔥 Short liquidations:\n{_fmt_liq(sig.short_liq)}" if sig.strong else ""
+    funding_count = _fmt_funding_count(sig.next_funding_time)
     chart = CHART_URL.format(symbol=sig.symbol.replace("USDT", ""))
 
     return (
         f"{emoji} — {sig.symbol}\n"
-        f"\n⚙️ Funding:\n"
-        f"{sig.funding_prev:+.4f}% → {sig.funding_now:+.4f}%"
+        f"\n⚙️ Funding 30m:\n"
+        f"{sig.funding_prev:+.2f}% → {sig.funding_now:+.2f}%"
+        f"\n\n⌛️ Funding count:\n"
+        f"{funding_count}"
         f"\n\n💰 Price:\n"
-        f"{sig.price_prev:.4f} → {sig.price_now:.4f}\n"
-        f"{sig.price_change_pct:+.2f}%"
+        f"{sig.price_prev} → {sig.price_now}\n"
+        f"{sig.price_change_pct:+.4f}%"
         f"\n\n📈 OI:\n"
         f"{sig.oi_change_pct:+.1f}%"
         f"{liq_line}"

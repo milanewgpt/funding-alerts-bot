@@ -15,18 +15,20 @@ def _get(path: str, params: dict = None) -> list | dict:
     return resp.json()
 
 
-def fetch_funding_and_prices() -> tuple[dict[str, float], dict[str, float]]:
-    """Returns (funding_map, price_map) for all USDT perpetuals."""
+def fetch_funding_and_prices() -> tuple[dict[str, float], dict[str, float], dict[str, int]]:
+    """Returns (funding_map, price_map, next_funding_time_map) for all USDT perpetuals."""
     data = _get("/fapi/v1/premiumIndex")
     funding = {}
     prices = {}
+    next_ft = {}
     for item in data:
         symbol = item["symbol"]
         if not symbol.endswith("USDT"):
             continue
         funding[symbol] = float(item["lastFundingRate"]) * 100  # convert to %
         prices[symbol] = float(item["markPrice"])
-    return funding, prices
+        next_ft[symbol] = int(item["nextFundingTime"])  # ms timestamp
+    return funding, prices, next_ft
 
 
 def fetch_top_symbols_by_volume(n: int) -> list[str]:
@@ -63,7 +65,7 @@ def collect_snapshot() -> list[dict]:
     log.info("Collecting snapshot from Binance...")
     try:
         top_symbols = fetch_top_symbols_by_volume(TOP_N_COINS)
-        funding, prices = fetch_funding_and_prices()
+        funding, prices, next_ft = fetch_funding_and_prices()
         oi_map = fetch_open_interest(top_symbols, prices)
     except Exception as e:
         log.error(f"Binance fetch error: {e}")
@@ -79,7 +81,8 @@ def collect_snapshot() -> list[dict]:
             "funding_rate": funding.get(symbol),
             "price": prices.get(symbol),
             "oi": oi_map.get(symbol),
-            "short_liq": 0.0,  # not available via REST; future: WS liquidation stream
+            "short_liq": 0.0,
+            "next_funding_time": next_ft.get(symbol, 0),
         })
     log.info(f"Collected {len(records)} symbols")
     return records

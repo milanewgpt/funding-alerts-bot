@@ -14,10 +14,16 @@ def init_db():
             funding_rate REAL,
             price REAL,
             oi REAL,
-            short_liq REAL
+            short_liq REAL,
+            next_funding_time INTEGER
         )
     """)
     conn.execute("CREATE INDEX IF NOT EXISTS idx_ts_symbol ON snapshots(ts, symbol)")
+    # migrate existing DB if column missing
+    try:
+        conn.execute("ALTER TABLE snapshots ADD COLUMN next_funding_time INTEGER")
+    except sqlite3.OperationalError:
+        pass
     conn.commit()
     conn.close()
 
@@ -26,9 +32,9 @@ def save_snapshots(records: list[dict]):
     ts = int(time.time())
     conn = sqlite3.connect(DB_PATH)
     conn.executemany(
-        "INSERT INTO snapshots(ts, symbol, exchange, funding_rate, price, oi, short_liq) "
-        "VALUES (:ts, :symbol, :exchange, :funding_rate, :price, :oi, :short_liq)",
-        [{**r, "ts": ts} for r in records],
+        "INSERT INTO snapshots(ts, symbol, exchange, funding_rate, price, oi, short_liq, next_funding_time) "
+        "VALUES (:ts, :symbol, :exchange, :funding_rate, :price, :oi, :short_liq, :next_funding_time)",
+        [{**r, "ts": ts, "next_funding_time": r.get("next_funding_time", 0)} for r in records],
     )
     conn.commit()
     conn.close()
