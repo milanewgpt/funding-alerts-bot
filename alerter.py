@@ -40,17 +40,12 @@ def format_message(sig: Signal) -> str:
 
     return (
         f"{emoji} — {sig.symbol}\n"
-        f"\n⚙️ Funding 30m:\n"
-        f"{sig.funding_prev:+.2f}% → {sig.funding_now:+.2f}%"
-        f"\n\n⌛️ Funding count:\n"
-        f"{funding_count}"
-        f"\n\n💰 Price:\n"
-        f"{sig.price_prev} → {sig.price_now}\n"
-        f"{sig.price_change_pct:+.4f}%"
-        f"\n\n📈 OI:\n"
-        f"{sig.oi_change_pct:+.1f}%"
+        f"\n⚙️ Funding 30m: {sig.funding_prev:+.2f}% → {sig.funding_now:+.2f}%"
+        f"\n⌛️ Funding count: {funding_count}"
+        f"\n💰 Price: {sig.price_prev} → {sig.price_now} ({sig.price_change_pct:+.4f}%)"
+        f"\n📈 OI: {sig.oi_change_pct:+.1f}%"
         f"{liq_line}"
-        f"\n\n📊 Chart:\n{chart}"
+        f"\n\n📊 Chart: {chart}"
     )
 
 
