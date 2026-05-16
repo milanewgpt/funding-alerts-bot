@@ -53,7 +53,11 @@ def evaluate(current: list[dict], previous: list[dict]) -> list[Signal]:
 
         funding_delta = funding_now - funding_prev
 
-        # Filter 2: price must be rising
+        # Filter 2: funding must not be improving (delta <= 0)
+        if funding_delta > 0:
+            continue
+
+        # Filter 3: price must be rising
         price_change = (price_now - price_prev) / price_prev * 100
         if price_change < PRICE_CHANGE_MIN:
             continue
