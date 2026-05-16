@@ -7,7 +7,6 @@ from config import TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
 log = logging.getLogger(__name__)
 
 TG_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
-CHART_URL = "https://www.tradingview.com/chart/?symbol=BINANCE:{symbol}USDT.P"
 
 
 def _fmt_liq(usd: float) -> str:
@@ -32,14 +31,22 @@ def _fmt_funding_count(next_funding_time_ms: int) -> str:
     return f"{int(minutes_left)}m ({interval})"
 
 
+def _chart_url(sig: Signal) -> str:
+    if sig.exchange == "BingX":
+        base = sig.symbol.replace("-USDT", "")
+        return f"https://www.tradingview.com/chart/?symbol=BINGX:{base}-USDT"
+    base = sig.symbol.replace("USDT", "")
+    return f"https://www.tradingview.com/chart/?symbol=BINANCE:{base}USDT.P"
+
+
 def format_message(sig: Signal) -> str:
     emoji = "🔥 Strong signal" if sig.strong else "🟢 Long setup"
-    liq_line = f"\n🔥 Short liquidations:\n{_fmt_liq(sig.short_liq)}" if sig.strong else ""
+    liq_line = f"\n🔥 Short liquidations: {_fmt_liq(sig.short_liq)}" if sig.strong else ""
     funding_count = _fmt_funding_count(sig.next_funding_time)
-    chart = CHART_URL.format(symbol=sig.symbol.replace("USDT", ""))
+    chart = _chart_url(sig)
 
     return (
-        f"{emoji} — {sig.symbol}\n"
+        f"{emoji} — {sig.symbol} ({sig.exchange})\n"
         f"\n⚙️ Funding 30m: {sig.funding_prev:+.2f}% → {sig.funding_now:+.2f}%"
         f"\n⌛️ Funding count: {funding_count}"
         f"\n💰 Price: {sig.price_prev} → {sig.price_now} ({sig.price_change_pct:+.4f}%)"

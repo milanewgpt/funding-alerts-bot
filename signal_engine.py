@@ -8,6 +8,7 @@ log = logging.getLogger(__name__)
 @dataclass
 class Signal:
     symbol: str
+    exchange: str
     funding_prev: float
     funding_now: float
     funding_delta: float       # funding_now - funding_prev
@@ -21,12 +22,13 @@ class Signal:
 
 
 def evaluate(current: list[dict], previous: list[dict]) -> list[Signal]:
-    prev_map = {r["symbol"]: r for r in previous}
+    prev_map = {(r["symbol"], r["exchange"]): r for r in previous}
     signals = []
 
     for rec in current:
         symbol = rec["symbol"]
-        prev = prev_map.get(symbol)
+        exchange = rec["exchange"]
+        prev = prev_map.get((symbol, exchange))
         if not prev:
             continue
 
@@ -67,6 +69,7 @@ def evaluate(current: list[dict], previous: list[dict]) -> list[Signal]:
 
         signals.append(Signal(
             symbol=symbol,
+            exchange=exchange,
             funding_prev=funding_prev,
             funding_now=funding_now,
             funding_delta=funding_delta,
@@ -79,8 +82,8 @@ def evaluate(current: list[dict], previous: list[dict]) -> list[Signal]:
             strong=strong,
         ))
         log.info(
-            f"Signal: {symbol} funding={funding_now:+.4f}% (Δ{funding_delta:+.4f}%) "
-            f"price={price_change:+.2f}%"
+            f"Signal: [{exchange}] {symbol} funding={funding_now:+.4f}% "
+            f"(Δ{funding_delta:+.4f}%) price={price_change:+.2f}%"
         )
 
     return signals

@@ -18,7 +18,7 @@ def init_db():
             next_funding_time INTEGER
         )
     """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_ts_symbol ON snapshots(ts, symbol)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_ts_symbol ON snapshots(ts, symbol, exchange)")
     # migrate existing DB if column missing
     try:
         conn.execute("ALTER TABLE snapshots ADD COLUMN next_funding_time INTEGER")
@@ -50,11 +50,11 @@ def get_snapshots_before(ts: int, lookback_seconds: int) -> list[dict]:
         SELECT s.*
         FROM snapshots s
         INNER JOIN (
-            SELECT symbol, MAX(ts) AS max_ts
+            SELECT symbol, exchange, MAX(ts) AS max_ts
             FROM snapshots
             WHERE ts <= :target
-            GROUP BY symbol
-        ) best ON s.symbol = best.symbol AND s.ts = best.max_ts
+            GROUP BY symbol, exchange
+        ) best ON s.symbol = best.symbol AND s.exchange = best.exchange AND s.ts = best.max_ts
     """, {"target": target}).fetchall()
     conn.close()
     return [dict(r) for r in rows]
