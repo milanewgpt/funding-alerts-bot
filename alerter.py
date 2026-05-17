@@ -1,12 +1,14 @@
 import time
 import httpx
 import logging
+from datetime import datetime, timedelta
 from signal_engine import Signal
-from config import TELEGRAM_TOKEN, TELEGRAM_CHAT_ID
+from config import TELEGRAM_TOKEN, TELEGRAM_CHAT_ID, COOLDOWN_MINUTES
 
 log = logging.getLogger(__name__)
 
 TG_URL = f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage"
+_cooldown: dict[tuple[str, str], datetime] = {}
 
 
 def _fmt_liq(usd: float) -> str:
@@ -72,5 +74,12 @@ def send_signal(sig: Signal):
 
 
 def send_signals(signals: list[Signal]):
+    now = datetime.utcnow()
     for sig in signals:
+        key = (sig.symbol, sig.exchange)
+        last = _cooldown.get(key)
+        if last and (now - last) < timedelta(minutes=COOLDOWN_MINUTES):
+            log.debug(f"Cooldown: {sig.symbol} ({sig.exchange})")
+            continue
         send_signal(sig)
+        _cooldown[key] = now
