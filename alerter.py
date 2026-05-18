@@ -34,11 +34,8 @@ def _fmt_funding_count(next_funding_time_ms: int) -> str:
 
 
 def _chart_url(sig: Signal) -> str:
-    if sig.exchange == "BingX":
-        base = sig.symbol.replace("-USDT", "")
-        return f"https://www.tradingview.com/chart/?symbol=BINGX:{base}-USDT"
-    base = sig.symbol.replace("USDT", "")
-    return f"https://www.tradingview.com/chart/?symbol=BINANCE:{base}USDT.P"
+    base = sig.symbol.replace("-USDT", "")
+    return f"https://www.tradingview.com/chart/?symbol=BINGX:{base}-USDT"
 
 
 def format_message(sig: Signal) -> str:
@@ -48,7 +45,7 @@ def format_message(sig: Signal) -> str:
     chart = _chart_url(sig)
 
     return (
-        f"{emoji} — {sig.symbol} ({sig.exchange})\n"
+        f"{emoji} — {sig.symbol}\n"
         f"\n⚙️ Funding 30m: {sig.funding_prev:+.2f}% → {sig.funding_now:+.2f}%"
         f"\n⌛️ Funding count: {funding_count}"
         f"\n💰 Price: {sig.price_prev} → {sig.price_now} ({sig.price_change_pct:+.4f}%)"

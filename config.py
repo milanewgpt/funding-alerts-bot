@@ -14,8 +14,5 @@ COOLDOWN_MINUTES = int(os.environ.get("COOLDOWN_MINUTES", "60"))           # min
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL", "300"))   # seconds
 LOOKBACK_MINUTES = int(os.environ.get("LOOKBACK_MINUTES", "30"))
 
-# Top N coins by OI to monitor
-TOP_N_COINS = int(os.environ.get("TOP_N_COINS", "100"))
-
 DATA_DIR = os.environ.get("DATA_DIR", "/home/gpt/funding-alerts-bot/data")
 DB_PATH = os.path.join(DATA_DIR, "snapshots.db")
