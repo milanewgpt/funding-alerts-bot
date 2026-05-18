@@ -57,7 +57,7 @@ def collect_snapshot() -> list[dict]:
         for f in as_completed(futures):
             sym, data = f.result()
             if data:
-                funding_map[sym] = float(data["lastFundingRate"]) * 100
+                funding_map[sym] = round(float(data["lastFundingRate"]) * 100, 4)
                 prices[sym] = float(data["markPrice"])
                 next_ft[sym] = int(data["nextFundingTime"])
 
