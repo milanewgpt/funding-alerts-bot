@@ -47,13 +47,17 @@ def evaluate(current: list[dict], previous: list[dict]) -> list[Signal]:
         if price_prev == 0:
             continue
 
-        # Filter 1: funding must reach threshold
+        # Filter 1: 30m ago funding was at/above threshold (fresh crossing only)
+        if funding_prev < FUNDING_THRESHOLD:
+            continue
+
+        # Filter 2: now funding is at/below threshold
         if funding_now > FUNDING_THRESHOLD:
             continue
 
         funding_delta = funding_now - funding_prev
 
-        # Filter 2: funding must be actively getting more negative (strict)
+        # Filter 3: funding must be getting more negative (not static)
         if funding_delta >= 0:
             continue
 
