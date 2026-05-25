@@ -1,8 +1,7 @@
 import logging
 import time
-import os
 
-from config import POLL_INTERVAL, LOOKBACK_MINUTES, DATA_DIR
+from config import POLL_INTERVAL, LOOKBACK_MINUTES
 from db import init_db, save_snapshots, get_snapshots_before, purge_old
 from collector import collect_snapshot
 from signal_engine import evaluate
@@ -39,7 +38,6 @@ def run_cycle():
 
 
 def main():
-    os.makedirs(DATA_DIR, exist_ok=True)
     init_db()
     log.info(f"Funding alerts bot started (poll={POLL_INTERVAL}s, lookback={LOOKBACK_MINUTES}m)")
 

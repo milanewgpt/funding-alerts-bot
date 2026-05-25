@@ -1,68 +1,34 @@
-import sqlite3
 import time
-from config import DB_PATH
+
+# In-memory snapshot store
+# Each entry: (ts: int, snap_map: dict[(symbol, exchange) -> record])
+_snapshots: list[tuple[int, dict]] = []
 
 
 def init_db():
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("""
-        CREATE TABLE IF NOT EXISTS snapshots (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            ts INTEGER NOT NULL,
-            symbol TEXT NOT NULL,
-            exchange TEXT NOT NULL,
-            funding_rate REAL,
-            price REAL,
-            oi REAL,
-            short_liq REAL,
-            next_funding_time INTEGER
-        )
-    """)
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_ts_symbol ON snapshots(ts, symbol, exchange)")
-    # migrate existing DB if column missing
-    try:
-        conn.execute("ALTER TABLE snapshots ADD COLUMN next_funding_time INTEGER")
-    except sqlite3.OperationalError:
-        pass
-    conn.commit()
-    conn.close()
+    pass  # no-op for in-memory storage
 
 
-def save_snapshots(records: list[dict]):
+def save_snapshots(records: list[dict]) -> int:
     ts = int(time.time())
-    conn = sqlite3.connect(DB_PATH)
-    conn.executemany(
-        "INSERT INTO snapshots(ts, symbol, exchange, funding_rate, price, oi, short_liq, next_funding_time) "
-        "VALUES (:ts, :symbol, :exchange, :funding_rate, :price, :oi, :short_liq, :next_funding_time)",
-        [{**r, "ts": ts, "next_funding_time": r.get("next_funding_time", 0)} for r in records],
-    )
-    conn.commit()
-    conn.close()
+    snap_map = {(r["symbol"], r["exchange"]): r for r in records}
+    _snapshots.append((ts, snap_map))
     return ts
 
 
 def get_snapshots_before(ts: int, lookback_seconds: int) -> list[dict]:
     target = ts - lookback_seconds
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    # Get snapshot closest to (ts - lookback), per symbol
-    rows = conn.execute("""
-        SELECT s.*
-        FROM snapshots s
-        INNER JOIN (
-            SELECT symbol, exchange, MAX(ts) AS max_ts
-            FROM snapshots
-            WHERE ts <= :target
-            GROUP BY symbol, exchange
-        ) best ON s.symbol = best.symbol AND s.exchange = best.exchange AND s.ts = best.max_ts
-    """, {"target": target}).fetchall()
-    conn.close()
-    return [dict(r) for r in rows]
+    # Per symbol: find the latest snapshot at or before target
+    best: dict[tuple, tuple[int, dict]] = {}
+    for snap_ts, snap_map in _snapshots:
+        if snap_ts <= target:
+            for key, rec in snap_map.items():
+                if key not in best or snap_ts > best[key][0]:
+                    best[key] = (snap_ts, rec)
+    return [rec for _, rec in best.values()]
 
 
 def purge_old(older_than_seconds: int = 7200):
+    global _snapshots
     cutoff = int(time.time()) - older_than_seconds
-    conn = sqlite3.connect(DB_PATH)
-    conn.execute("DELETE FROM snapshots WHERE ts < ?", (cutoff,))
-    conn.commit()
-    conn.close()
+    _snapshots = [(ts, m) for ts, m in _snapshots if ts >= cutoff]
