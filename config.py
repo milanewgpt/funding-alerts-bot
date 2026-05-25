@@ -7,6 +7,7 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 FUNDING_THRESHOLD = float(os.environ.get("FUNDING_THRESHOLD", "-0.10"))   # funding_now <= X%
 FUNDING_DELTA_MIN = float(os.environ.get("FUNDING_DELTA_MIN", "-0.07"))   # drop over 30m <= X%
 PRICE_CHANGE_MIN = float(os.environ.get("PRICE_CHANGE_MIN", "1.0"))        # %
+OI_CHANGE_MIN = float(os.environ.get("OI_CHANGE_MIN", "0.0"))             # % OI change required (0 = non-negative)
 SHORT_LIQ_MIN = float(os.environ.get("SHORT_LIQ_MIN", "200000"))           # USD
 COOLDOWN_MINUTES = int(os.environ.get("COOLDOWN_MINUTES", "60"))           # min between same-coin alerts
 

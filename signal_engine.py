@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from config import FUNDING_THRESHOLD, PRICE_CHANGE_MIN, SHORT_LIQ_MIN
+from config import FUNDING_THRESHOLD, PRICE_CHANGE_MIN, OI_CHANGE_MIN, SHORT_LIQ_MIN
 
 log = logging.getLogger(__name__)
 
@@ -69,6 +69,10 @@ def evaluate(current: list[dict], previous: list[dict]) -> list[Signal]:
         oi_change = 0.0
         if oi_prev and oi_prev != 0 and oi_now:
             oi_change = (oi_now - oi_prev) / oi_prev * 100
+
+        # Filter 5: OI must be growing (not contracting)
+        if oi_change < OI_CHANGE_MIN:
+            continue
 
         strong = short_liq >= SHORT_LIQ_MIN
 
