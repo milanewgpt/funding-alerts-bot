@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass
-from config import FUNDING_THRESHOLD, PRICE_CHANGE_MIN, PRICE_CHANGE_MAX, OI_CHANGE_MIN, VOLUME_24H_MIN, SHORT_LIQ_MIN
+from config import FUNDING_THRESHOLD, FUNDING_DELTA_MIN, PRICE_CHANGE_MIN, PRICE_CHANGE_MAX, OI_CHANGE_MIN, VOLUME_24H_MIN, SHORT_LIQ_MIN
 
 log = logging.getLogger(__name__)
 
@@ -57,8 +57,10 @@ def evaluate(current: list[dict], previous: list[dict]) -> list[Signal]:
 
         funding_delta = funding_now - funding_prev
 
-        # Filter 3: funding must be getting more negative (not static)
+        # Filter 3: funding must be getting more negative (not static or float micro-noise)
         if funding_delta >= 0:
+            continue
+        if funding_delta > FUNDING_DELTA_MIN:
             continue
 
         # Filter 4: price must be rising but not already pumped

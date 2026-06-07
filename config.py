@@ -5,7 +5,7 @@ TELEGRAM_CHAT_ID = os.environ["TELEGRAM_CHAT_ID"]
 
 # Signal thresholds
 FUNDING_THRESHOLD = float(os.environ.get("FUNDING_THRESHOLD", "-0.10"))   # funding_now <= X%
-FUNDING_DELTA_MIN = float(os.environ.get("FUNDING_DELTA_MIN", "-0.07"))   # drop over 30m <= X%
+FUNDING_DELTA_MIN = float(os.environ.get("FUNDING_DELTA_MIN", "-0.005"))  # min delta to filter float micro-noise
 PRICE_CHANGE_MIN = float(os.environ.get("PRICE_CHANGE_MIN", "1.0"))        # %
 PRICE_CHANGE_MAX = float(os.environ.get("PRICE_CHANGE_MAX", "10.0"))       # % cap — skip already-pumped coins
 OI_CHANGE_MIN = float(os.environ.get("OI_CHANGE_MIN", "1.0"))             # % OI change required
